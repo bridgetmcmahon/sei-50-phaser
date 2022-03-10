@@ -20,6 +20,9 @@ const game = new Phaser.Game(config);
 let platforms;
 let player;
 let cursors;
+let stars;
+let score = 0;
+let scoreText;
 
 function preload() {
   this.load.image('sky', 'assets/sky.png');
@@ -32,17 +35,17 @@ function preload() {
 }
 
 function create() {
-  // add sky
+  // –––––––––––––– add sky ––––––––––––––
   this.add.image(400, 300, 'sky');
 
-  // add platforms
+  // –––––––––––––– add platforms –––––––––––––– 
   platforms = this.physics.add.staticGroup();
   platforms.create(400, 568, 'ground').setScale(2).refreshBody();
   platforms.create(600, 400, 'ground');
   platforms.create(50, 250, 'ground');
   platforms.create(750, 220, 'ground');
 
-  // add player
+  // –––––––––––––– add player ––––––––––––––
   player = this.physics.add.sprite(100, 450, 'dude');
   player.setBounce(0.2);
   player.setCollideWorldBounds(true);
@@ -67,15 +70,30 @@ function create() {
     frameRate: 10,
     repeat: -1
   });
+
+  // –––––––––––––– add stars ––––––––––––––
+  stars = this.physics.add.group({
+    key: 'star',
+    repeat: 11,
+    setXY: { x: 12, y: 0, stepX: 70 }
+  });
+  stars.children.iterate((child) => {
+    child.setBounceY(Phaser.Math.FloatBetween(0.4, 0.8));
+  });
+  this.physics.add.collider(stars, platforms);
+  this.physics.add.overlap(player, stars, collectStar, null, this);
+
+  // –––––––––––––– add scoring ––––––––––––––
+  scoreText = this.add.text(16, 16, 'score: 0', { fontSize: '32px', fill: '#fff' })
 }
 
 function update() {
   cursors = this.input.keyboard.createCursorKeys();
   if (cursors.left.isDown) {
-    player.setVelocityX(-160);
+    player.setVelocityX(-500);
     player.anims.play('left', true);
   } else if (cursors.right.isDown) {
-    player.setVelocityX(160);
+    player.setVelocityX(500);
     player.anims.play('right', true);
   } else {
     player.setVelocityX(0);
@@ -85,4 +103,11 @@ function update() {
   if (cursors.up.isDown && player.body.touching.down) {
     player.setVelocityY(-330);
   }
+}
+
+function collectStar(player, star) {
+  star.disableBody(true, true);
+
+  score += 100
+  scoreText.setText(`score: ${score}`);
 }
